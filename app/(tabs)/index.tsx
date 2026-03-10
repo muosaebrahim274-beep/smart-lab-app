@@ -1,48 +1,71 @@
-import { ScrollView, Text, View, TouchableOpacity } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, View, Text, Pressable } from "react-native";
+import { WebView } from "react-native-webview";
 
 import { ScreenContainer } from "@/components/screen-container";
 
-/**
- * Home Screen - NativeWind Example
- *
- * This template uses NativeWind (Tailwind CSS for React Native).
- * You can use familiar Tailwind classes directly in className props.
- *
- * Key patterns:
- * - Use `className` instead of `style` for most styling
- * - Theme colors: use tokens directly (bg-background, text-foreground, bg-primary, etc.); no dark: prefix needed
- * - Responsive: standard Tailwind breakpoints work on web
- * - Custom colors defined in tailwind.config.js
- */
+const SMART_LAB_URL = "https://9000-firebase-studio-1772593067175.cluster-lu4mup47g5gm4rtyvhzpwbfadi.cloudworkstations.dev";
+
 export default function HomeScreen() {
-  return (
-    <ScreenContainer className="p-6">
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-        <View className="flex-1 gap-8">
-          {/* Hero Section */}
-          <View className="items-center gap-2">
-            <Text className="text-4xl font-bold text-foreground">Welcome</Text>
-            <Text className="text-base text-muted text-center">
-              Edit app/(tabs)/index.tsx to get started
-            </Text>
-          </View>
+  const webViewRef = useRef<WebView>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-          {/* Example Card */}
-          <View className="w-full max-w-sm self-center bg-surface rounded-2xl p-6 shadow-sm border border-border">
-            <Text className="text-lg font-semibold text-foreground mb-2">NativeWind Ready</Text>
-            <Text className="text-sm text-muted leading-relaxed">
-              Use Tailwind CSS classes directly in your React Native components.
-            </Text>
-          </View>
+  const handleLoadStart = () => {
+    setIsLoading(true);
+    setError(null);
+  };
 
-          {/* Example Button */}
-          <View className="items-center">
-            <TouchableOpacity className="bg-primary px-6 py-3 rounded-full active:opacity-80">
-              <Text className="text-background font-semibold">Get Started</Text>
-            </TouchableOpacity>
-          </View>
+  const handleLoadEnd = () => {
+    setIsLoading(false);
+  };
+
+  const handleError = (syntheticEvent: any) => {
+    const { nativeEvent } = syntheticEvent;
+    setError(nativeEvent.description || "حدث خطأ في تحميل الصفحة");
+    setIsLoading(false);
+  };
+
+  const handleReload = () => {
+    webViewRef.current?.reload();
+  };
+
+  if (error) {
+    return (
+      <ScreenContainer className="flex items-center justify-center p-6">
+        <View className="items-center gap-4">
+          <Text className="text-2xl font-bold text-foreground">خطأ في الاتصال</Text>
+          <Text className="text-base text-muted text-center">{error}</Text>
+          <Pressable
+            onPress={handleReload}
+            className="bg-primary px-6 py-3 rounded-full"
+          >
+            <Text className="text-white font-semibold">إعادة محاولة</Text>
+          </Pressable>
         </View>
-      </ScrollView>
-    </ScreenContainer>
+      </ScreenContainer>
+    );
+  }
+
+  return (
+    <View className="flex-1 bg-background">
+      {isLoading && (
+        <View className="absolute inset-0 flex items-center justify-center bg-background z-50">
+          <ActivityIndicator size="large" color="#0a7ea4" />
+        </View>
+      )}
+      <WebView
+        ref={webViewRef}
+        source={{ uri: SMART_LAB_URL }}
+        onLoadStart={handleLoadStart}
+        onLoadEnd={handleLoadEnd}
+        onError={handleError}
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        startInLoadingState={true}
+        scalesPageToFit={true}
+        style={{ flex: 1 }}
+      />
+    </View>
   );
 }
